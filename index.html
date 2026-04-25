@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Philly Table | ar295966.github.io/restaurant-tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#f5f0e8;--ink:#1a1410;--rust:#c4572a;--gold:#d4a843;--sage:#5a7a5c;--stone:#8c8070;--paper:#ede8dc;--card:#faf7f2;--visited-bg:#f0f5ee;--visited-border:#b8d4b0;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--cream);color:var(--ink);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;}
+  header{background:var(--ink);padding:28px 40px 24px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;}
+  .logo-block h1{font-family:'Playfair Display',serif;font-size:2.4rem;color:var(--cream);letter-spacing:-0.5px;line-height:1;}
+  .logo-block h1 span{color:var(--gold);}
+  .logo-block p{color:var(--stone);font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;margin-top:6px;}
+  .header-stats{display:flex;gap:28px;text-align:right;}
+  .stat-block{text-align:center;}
+  .stat-num{font-family:'Playfair Display',serif;font-size:1.8rem;line-height:1;}
+  .stat-num.gold{color:var(--gold);}
+  .stat-num.sage{color:#7ac4a0;}
+  .stat-label{color:var(--stone);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;}
+  .toolbar{background:var(--paper);border-bottom:1px solid #d6cfc0;padding:16px 40px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+  .filter-group{display:flex;gap:8px;flex-wrap:wrap;flex:1;}
+  select,input[type="text"]{background:var(--card);border:1px solid #c8bfad;color:var(--ink);font-family:'DM Sans',sans-serif;font-size:0.82rem;padding:8px 12px;border-radius:4px;outline:none;transition:border-color 0.2s;}
+  select:focus,input[type="text"]:focus{border-color:var(--rust);}
+  input[type="text"]{min-width:180px;flex:1;}
+  .btn-add{background:var(--rust);color:#fff;border:none;padding:9px 20px;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:500;letter-spacing:0.06em;border-radius:4px;cursor:pointer;white-space:nowrap;transition:background 0.2s,transform 0.1s;}
+  .btn-add:hover{background:#a8451e;}
+  .btn-add:active{transform:scale(0.97);}
+  .btn-export{background:none;border:1px solid #c8bfad;color:var(--stone);padding:8px 14px;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:500;border-radius:4px;cursor:pointer;white-space:nowrap;transition:all 0.15s;display:inline-flex;align-items:center;}
+  .btn-export:hover{border-color:var(--ink);color:var(--ink);background:rgba(26,20,16,0.04);}
+  main{padding:32px 40px;max-width:1280px;margin:0 auto;}
+  .sort-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+  .legend{display:flex;gap:16px;align-items:center;}
+  .legend-item{display:flex;align-items:center;gap:5px;font-size:0.72rem;color:var(--stone);letter-spacing:0.06em;text-transform:uppercase;}
+  .priority-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .priority-high{background:var(--rust);}
+  .priority-medium{background:var(--gold);}
+  .priority-low{background:#c8bfad;}
+  .sort-btns{display:flex;gap:4px;flex-wrap:wrap;}
+  .sort-btn{background:none;border:1px solid #c8bfad;color:var(--stone);font-family:'DM Sans',sans-serif;font-size:0.75rem;padding:5px 12px;border-radius:3px;cursor:pointer;transition:all 0.15s;}
+  .sort-btn.active,.sort-btn:hover{background:var(--ink);color:var(--cream);border-color:var(--ink);}
+  #restaurant-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+
+  /* CARDS */
+  .card{background:var(--card);border:1px solid #d6cfc0;border-radius:6px;padding:20px;position:relative;transition:transform 0.18s,box-shadow 0.18s;animation:fadeIn 0.3s ease;}
+  .card.been-there{background:var(--visited-bg);border-color:var(--visited-border);}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(26,20,16,0.1);}
+  .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;}
+  .card-name-row{display:flex;gap:8px;align-items:flex-start;flex:1;min-width:0;}
+  .card-name{font-family:'Playfair Display',serif;font-size:1.1rem;line-height:1.25;color:var(--ink);text-decoration:none;border-bottom:1px solid transparent;transition:border-color 0.15s,color 0.15s;}
+  .card-name:hover{color:var(--rust);border-bottom-color:var(--rust);}
+  .card-name.no-link{cursor:default;}
+  .card-name.no-link:hover{color:var(--ink);border-bottom-color:transparent;}
+  .card-actions{display:flex;gap:6px;flex-shrink:0;}
+  .icon-btn{background:none;border:none;cursor:pointer;padding:2px;color:var(--stone);font-size:1rem;line-height:1;transition:color 0.15s;}
+  .icon-btn:hover{color:var(--rust);}
+  .icon-btn.edit:hover{color:var(--sage);}
+  .card-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px;}
+  .tag-row{display:flex;flex-wrap:wrap;gap:5px;}
+  .tag{font-size:0.67rem;letter-spacing:0.08em;text-transform:uppercase;padding:3px 7px;border-radius:3px;font-weight:500;}
+  .tag-neighborhood{background:#e8e0d0;color:var(--stone);}
+  .tag-cuisine{background:#dce8dc;color:var(--sage);}
+  .tag-vibe-date{background:#fce8e0;color:var(--rust);}
+  .tag-vibe-casual{background:#e8f0e0;color:#4a6a30;}
+  .tag-vibe-family{background:#e8e8f0;color:#404080;}
+  .tag-vibe-special{background:#f8e8c8;color:#8a6010;}
+  .google-rating{display:flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0;}
+  .star{color:var(--gold);font-size:0.8rem;}
+  .rating-num{font-size:0.75rem;font-weight:500;color:var(--stone);}
+  .card-notes{font-size:0.81rem;color:var(--stone);line-height:1.55;font-style:italic;margin-top:8px;}
+
+  /* STATUS TOGGLE */
+  .status-row{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid #e0d8cc;}
+  .card.been-there .status-row{border-top-color:#c8dcc0;}
+  .status-toggle{display:flex;align-items:center;gap:0;border:1px solid #c8bfad;border-radius:4px;overflow:hidden;font-size:0.7rem;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;}
+  .status-btn{background:none;border:none;padding:5px 10px;cursor:pointer;color:var(--stone);font-family:'DM Sans',sans-serif;font-size:0.7rem;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;transition:background 0.15s,color 0.15s;white-space:nowrap;}
+  .status-btn.want{border-right:1px solid #c8bfad;}
+  .status-btn.active-want{background:var(--rust);color:#fff;}
+  .status-btn.active-been{background:var(--sage);color:#fff;}
+
+  /* MY RATING (1-10) */
+  .my-rating-row{display:flex;align-items:center;gap:8px;margin-top:0;}
+  .my-rating-label{font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--sage);white-space:nowrap;}
+  .rating-pips{display:flex;gap:3px;}
+  .pip{width:18px;height:18px;border-radius:3px;border:1px solid #b8d4b0;background:none;cursor:pointer;font-size:0.62rem;font-weight:500;color:#9ab89a;display:flex;align-items:center;justify-content:center;transition:background 0.12s,color 0.12s,border-color 0.12s;font-family:'DM Sans',sans-serif;}
+  .pip.filled{background:var(--sage);border-color:var(--sage);color:#fff;}
+  .pip:hover{background:#e0f0e0;border-color:var(--sage);color:var(--sage);}
+  .pip.filled:hover{background:#4a6a4a;}
+
+  #empty-state{grid-column:1/-1;text-align:center;padding:80px 20px;display:none;}
+  #empty-state .empty-icon{font-size:3rem;margin-bottom:16px;opacity:0.4;}
+  #empty-state p{color:var(--stone);font-size:0.9rem;}
+  #empty-state strong{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--ink);display:block;margin-bottom:8px;}
+
+  /* MODAL */
+  .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(26,20,16,0.6);z-index:100;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px);}
+  .modal-backdrop.open{display:flex;}
+  .modal{background:var(--card);border-radius:8px;padding:32px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:modalIn 0.22s ease;}
+  @keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
+  .modal h2{font-family:'Playfair Display',serif;font-size:1.5rem;margin-bottom:24px;color:var(--ink);}
+  .form-row{margin-bottom:16px;}
+  .form-row label{display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--stone);margin-bottom:6px;}
+  .form-row input,.form-row select,.form-row textarea{width:100%;background:var(--cream);border:1px solid #c8bfad;color:var(--ink);font-family:'DM Sans',sans-serif;font-size:0.88rem;padding:10px 12px;border-radius:4px;outline:none;transition:border-color 0.2s;}
+  .form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--rust);}
+  .form-row textarea{resize:vertical;min-height:80px;}
+  .form-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;}
+  .btn-cancel{background:none;border:1px solid #c8bfad;color:var(--stone);font-family:'DM Sans',sans-serif;font-size:0.82rem;padding:9px 18px;border-radius:4px;cursor:pointer;transition:all 0.15s;}
+  .btn-cancel:hover{border-color:var(--ink);color:var(--ink);}
+  .btn-save{background:var(--ink);color:var(--cream);border:none;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:500;padding:9px 20px;border-radius:4px;cursor:pointer;transition:background 0.15s;}
+  .btn-save:hover{background:var(--rust);}
+  @media(max-width:640px){header{padding:20px;}main{padding:20px;}.toolbar{padding:12px 20px;}.form-cols{grid-template-columns:1fr;}input[type="text"]{min-width:120px;}.header-stats{gap:16px;}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo-block">
+    <h1>Philly <span>Table</span></h1>
+    <p>My restaurant want-to-try list</p>
+  </div>
+  <div class="header-stats">
+    <div class="stat-block"><div class="stat-num gold" id="count-total">0</div><div class="stat-label">on the list</div></div>
+    <div class="stat-block"><div class="stat-num" style="color:#e8a878;" id="count-want">0</div><div class="stat-label">want to try</div></div>
+    <div class="stat-block"><div class="stat-num sage" id="count-been">0</div><div class="stat-label">been there</div></div>
+  </div>
+</header>
+<div class="toolbar">
+  <div class="filter-group">
+    <input type="text" id="search" placeholder="Search by name...">
+    <select id="filter-status">
+      <option value="">All statuses</option>
+      <option value="want">Want to Try</option>
+      <option value="been">Been There</option>
+    </select>
+    <select id="filter-neighborhood">
+      <option value="">All neighborhoods</option>
+      <option>Center City</option><option>Rittenhouse / Graduate Hospital</option>
+      <option>Fishtown / Northern Liberties</option><option>Old City / Society Hill</option>
+      <option>South Philly</option><option>East Passyunk</option>
+      <option>Chestnut Hill / Mt. Airy</option><option>Manayunk</option>
+      <option>Main Line</option><option>Other / Suburbs</option>
+    </select>
+    <select id="filter-cuisine">
+      <option value="">All cuisines</option>
+      <option>American</option><option>Italian</option><option>Japanese</option>
+      <option>Korean</option><option>Mexican</option><option>Mediterranean</option>
+      <option>Seafood</option><option>Steakhouse</option><option>Pizza</option>
+      <option>Brunch / Breakfast</option><option>Tasting Menu</option><option>Other</option>
+    </select>
+    <select id="filter-vibe">
+      <option value="">All vibes</option>
+      <option>Date Night</option><option>Casual</option><option>Family</option><option>Special Occasion</option>
+    </select>
+    <select id="filter-priority">
+      <option value="">Any priority</option>
+      <option>High</option><option>Medium</option><option>Low</option>
+    </select>
+  </div>
+  <div style="display:flex;gap:8px;flex-shrink:0;">
+    <button class="btn-export" onclick="exportData()" title="Download your list as a backup file">&#8595; Export</button>
+    <label class="btn-export" title="Restore from a backup file" style="cursor:pointer;">&#8593; Import<input type="file" id="import-input" accept=".json" style="display:none;" onchange="importData(event)"></label>
+    <button class="btn-add" onclick="openModal()">+ Add Restaurant</button>
+  </div>
+</div>
+<main>
+  <div class="sort-bar">
+    <div class="legend">
+      <div class="legend-item"><div class="priority-dot priority-high"></div> High</div>
+      <div class="legend-item"><div class="priority-dot priority-medium"></div> Medium</div>
+      <div class="legend-item"><div class="priority-dot priority-low"></div> Low</div>
+    </div>
+    <div class="sort-btns">
+      <button class="sort-btn active" data-sort="date">Recently Added</button>
+      <button class="sort-btn" data-sort="name">Name A&ndash;Z</button>
+      <button class="sort-btn" data-sort="priority">Priority</button>
+      <button class="sort-btn" data-sort="grating">&#9733; Google</button>
+      <button class="sort-btn" data-sort="myrating">&#9733; My Rating</button>
+    </div>
+  </div>
+  <div id="restaurant-grid">
+    <div id="empty-state">
+      <div class="empty-icon">&#127869;</div>
+      <strong>Your list is empty</strong>
+      <p>Add a restaurant above to start tracking your Philly dining wishlist.</p>
+    </div>
+  </div>
+</main>
+<div class="modal-backdrop" id="modal-backdrop" onclick="handleBackdropClick(event)">
+  <div class="modal">
+    <h2 id="modal-title">Add a Restaurant</h2>
+    <div class="form-row"><label>Restaurant Name *</label><input type="text" id="f-name" placeholder="e.g. Vernick Food &amp; Drink"></div>
+    <div class="form-row"><label>Website URL</label><input type="text" id="f-website" placeholder="https://..."></div>
+    <div class="form-cols">
+      <div class="form-row"><label>Neighborhood</label>
+        <select id="f-neighborhood"><option value="">-- select --</option>
+          <option>Center City</option><option>Rittenhouse / Graduate Hospital</option>
+          <option>Fishtown / Northern Liberties</option><option>Old City / Society Hill</option>
+          <option>South Philly</option><option>East Passyunk</option>
+          <option>Chestnut Hill / Mt. Airy</option><option>Manayunk</option>
+          <option>Main Line</option><option>Other / Suburbs</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Cuisine</label>
+        <select id="f-cuisine"><option value="">-- select --</option>
+          <option>American</option><option>Italian</option><option>Japanese</option>
+          <option>Korean</option><option>Mexican</option><option>Mediterranean</option>
+          <option>Seafood</option><option>Steakhouse</option><option>Pizza</option>
+          <option>Brunch / Breakfast</option><option>Tasting Menu</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-cols">
+      <div class="form-row"><label>Vibe</label>
+        <select id="f-vibe"><option value="">-- select --</option>
+          <option>Date Night</option><option>Casual</option><option>Family</option><option>Special Occasion</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Priority</label>
+        <select id="f-priority"><option value="Medium">Medium</option><option value="High">High -- must go</option><option value="Low">Low -- someday</option></select>
+      </div>
+    </div>
+    <div class="form-row"><label>Google Rating (e.g. 4.7)</label><input type="text" id="f-rating" placeholder="4.5"></div>
+    <div class="form-row"><label>Notes</label><textarea id="f-notes" placeholder="Why it's on your list, who mentioned it..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveRestaurant()">Save</button>
+    </div>
+  </div>
+</div>
+<script>
+const STORAGE_KEY='ar295966-restaurant-tracker-v1';
+const SEED_DATA=[{"name":"Kinto","neighborhood":"Fishtown / Northern Liberties","cuisine":"Other","vibe":"Date Night","priority":"High","notes":"Georgian BYOB tucked down an alley \u2014 khinkali dumplings, khachapuri variations, chicken satsivi in walnut cream. Stunning Tbilisi balcony diorama behind the bar.","website":"https://kintophilly.com","google_rating":4.9,"id":"1700007680000","added":"2025-01-01T00:00:00"},{"name":"Leo","neighborhood":"Center City","cuisine":"Other","vibe":"Date Night","priority":"High","notes":"Eclectic near Kimmel Center \u2014 hiramasa with olives/cherries, duck in burnt honey & peach, Parmesan gnocchi. Cocktail program follows a five-act structure.","website":"https://leo-restaurant.com","google_rating":4.9,"id":"1700007620000","added":"2025-01-01T00:00:00"},{"name":"Sao","neighborhood":"East Passyunk","cuisine":"Other","vibe":"Date Night","priority":"High","notes":"Southeast Asian oyster & crudo bar from James Beard winner Phila Lorn. Cambodian beach party vibes, fermented flavors. Reservations highly coveted.","website":"https://saophilly.com","google_rating":4.8,"id":"1700007560000","added":"2025-01-01T00:00:00"},{"name":"Banshee","neighborhood":"Rittenhouse / Graduate Hospital","cuisine":"American","vibe":"Date Night","priority":"High","notes":"American bistro w/ Scandinavian design from the Cheu/Bing Bing team \u2014 Wagyu tartare w/ puffed tapioca, mussels in coconut-harissa, roasted chicken with Marcona almonds.","website":"https://bansheephl.com","google_rating":4.8,"id":"1700007500000","added":"2025-01-01T00:00:00"},{"name":"La Jefa Caf\u00e9","neighborhood":"Rittenhouse / Graduate Hospital","cuisine":"Mexican","vibe":"Casual","priority":"Medium","notes":"Dan Suro's all-day concept on Latimer St \u2014 swordfish tacos, shrimp aguachile, tacos dorados. Transforms to Milpa Bar cocktail lounge at night.","website":"https://lajefaphilly.com","google_rating":4.8,"id":"1700007440000","added":"2025-01-01T00:00:00"},{"name":"Concordance Ferments","neighborhood":"Other / Suburbs","cuisine":"American","vibe":"Casual","priority":"Medium","notes":"Brewpub alongside Pennypack River in Hatboro \u2014 leather couches, board games, exceptional house beer. Bavarian pilsner and Nordic farmhouse ale.","website":"https://concordanceferments.com","google_rating":4.8,"id":"1700007380000","added":"2025-01-01T00:00:00"},{"name":"Emilia","neighborhood":"Fishtown / Northern Liberties","cuisine":"Italian","vibe":"Casual","priority":"High","notes":"Greg Vernick's Italian trattoria \u2014 wood-fired cooking, 20 walk-in bar spots. Radiatori mushroom bolognese, grilled fish, braised rabbit.","website":"https://emiliaphilly.com","google_rating":4.8,"id":"1700007320000","added":"2025-01-01T00:00:00"},{"name":"Fleur's","neighborhood":"Fishtown / Northern Liberties","cuisine":"Other","vibe":"Date Night","priority":"High","notes":"Big, bright French-modern from Vetri/Starr/Fork alumni \u2014 duck confit, pork terrine, Parisian gnocchi with mushroom ragout. Marble bar, walk-ins on weeknights.","website":"https://fleursphilly.com","google_rating":4.8,"id":"1700007260000","added":"2025-01-01T00:00:00"},{"name":"Heng Seng","neighborhood":"Other / Suburbs","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"Cherry Hill Cambodian noodle spot \u2014 Phnom Penh-style soup w/ pork, shrimp, squid. Owned by the original South Philly owners' kids.","website":"https://hengsengnoodles.com","google_rating":4.8,"id":"1700007200000","added":"2025-01-01T00:00:00"},{"name":"Bomb Bomb Bar","neighborhood":"South Philly","cuisine":"Italian","vibe":"Date Night","priority":"High","notes":"Joey Baldino's prix-fixe South Philly Italian seafood love letter \u2014 crab cakes, lobster shell pasta, squid ink spaghetti, silky carbonara. $7 beers, sundaes for dessert.","website":"https://bombbombbar.com","google_rating":4.6,"id":"1700007140000","added":"2025-01-01T00:00:00"},{"name":"TingTing's","neighborhood":"Center City","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"Hong Kong-style all-day BYO cafe from the EMei team \u2014 curried beef brisket, soy-spiked unagi over rice, pork char siu omelet. Sprawling menu.","website":"https://tingtingscafe.com","google_rating":4.6,"id":"1700007080000","added":"2025-01-01T00:00:00"},{"name":"Huda Burger","neighborhood":"Fishtown / Northern Liberties","cuisine":"American","vibe":"Casual","priority":"Medium","notes":"Smash burger by former Solomonov chef Yehuda Sichel \u2014 smashed patties on milk bread buns, pickled green tomato, bacon jam with jalape\u00f1o, house-smoked pastrami.","website":"https://hudaburger.com","google_rating":4.4,"id":"1700007020000","added":"2025-01-01T00:00:00"},{"name":"Peter Chang","neighborhood":"Other / Suburbs","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"Sichuan from two-time James Beard winner Peter Chang in King of Prussia \u2014 cumin lamb shank, dan dan noodles with olives, dim sum sampler bento box.","website":"https://peterchangkop.com","google_rating":4.4,"id":"1700006960000","added":"2025-01-01T00:00:00"},{"name":"Corio","neighborhood":"Center City","cuisine":"Italian","vibe":"Casual","priority":"Medium","notes":"Vernick alumni pizza/pasta in University City \u2014 hazelnut pesto pie, spicy crab bucatini, pork Milanese. Good beers from Two Locals next door.","website":"https://coriophilly.com","google_rating":4.4,"id":"1700006900000","added":"2025-01-01T00:00:00"},{"name":"dancerobot","neighborhood":"Rittenhouse / Graduate Hospital","cuisine":"Japanese","vibe":"Casual","priority":"Medium","notes":"Retro Japanese izakaya from Royal Sushi's Jesse Ito \u2014 '90s VHS vibe, kare pan in Krispy Kreme dough, takoyaki, katsu sandwiches.","website":"https://dancerobotphl.com","google_rating":4.2,"id":"1700006840000","added":"2025-01-01T00:00:00"},{"name":"Provenance","neighborhood":"Old City / Society Hill","cuisine":"American","vibe":"Date Night","priority":"High","notes":"#1 on 2025 Top 25 Philly list. Rating 9.8. Widely considered the best new restaurant in the city.","website":"https://provenancephl.com","google_rating":4.8,"id":"1700006780000","added":"2025-01-01T00:00:00"},{"name":"Royal Sushi & Izakaya","neighborhood":"South Philly","cuisine":"Japanese","vibe":"Date Night","priority":"High","notes":"#2 on 2025 Top 25. Rating 9.6. Acclaimed omakase and izakaya on South 2nd.","website":"https://royalizakaya.com","google_rating":4.7,"id":"1700006720000","added":"2025-01-01T00:00:00"},{"name":"Friday Saturday Sunday","neighborhood":"Rittenhouse / Graduate Hospital","cuisine":"American","vibe":"Date Night","priority":"High","notes":"#3 on 2025 Top 25. Rating 9.5. Chad & Hanna Williams's technical, seasonal, James Beard-recognized tasting menu restaurant.","website":"https://fridaysaturdaysunday.com","google_rating":4.6,"id":"1700006660000","added":"2025-01-01T00:00:00"},{"name":"Kalaya","neighborhood":"Fishtown / Northern Liberties","cuisine":"Other","vibe":"Date Night","priority":"High","notes":"#4 on 2025 Top 25. Rating 9.5. Thai from chef Nok Suntaranon \u2014 bold southern Thai flavors, known for the tom yum.","website":"https://kalayaphilly.com","google_rating":4.6,"id":"1700006600000","added":"2025-01-01T00:00:00"},{"name":"Mawn","neighborhood":"South Philly","cuisine":"Other","vibe":"Casual","priority":"High","notes":"#5 on 2025 Top 25. Rating 9.4. Cambodian-Jewish noodle soup concept \u2014 one of the most talked-about spots in the city.","website":"https://mawnph.com","google_rating":4.7,"id":"1700006540000","added":"2025-01-01T00:00:00"},{"name":"Her Place Supper Club","neighborhood":"Center City","cuisine":"American","vibe":"Special Occasion","priority":"High","notes":"#6 on 2025 Top 25. Rating 9.4. Private supper club \u2014 address not publicly listed. Reservations essential.","website":"https://herplacephilly.com","google_rating":4.6,"id":"1700006480000","added":"2025-01-01T00:00:00"},{"name":"Ambra","neighborhood":"South Philly","cuisine":"Italian","vibe":"Date Night","priority":"High","notes":"#7 on 2025 Top 25. Rating 9.3. Modern Italian on South 4th. Shares a kitchen with Southwark.","website":"https://ambraphilly.com","google_rating":4.7,"id":"1700006420000","added":"2025-01-01T00:00:00"},{"name":"Vernick Fish","neighborhood":"Center City","cuisine":"Seafood","vibe":"Date Night","priority":"High","notes":"#8 on 2025 Top 25. Rating 9.3. Greg Vernick's seafood-focused counterpart to Vernick Food & Drink.","website":"https://vernickfish.com","google_rating":4.6,"id":"1700006360000","added":"2025-01-01T00:00:00"},{"name":"My Loup","neighborhood":"Center City","cuisine":"American","vibe":"Date Night","priority":"High","notes":"#9 on 2025 Top 25. Rating 9.3. James Beard-nominated \u2014 intimate, creative American on Walnut St.","website":"https://myloupphl.com","google_rating":4.4,"id":"1700006300000","added":"2025-01-01T00:00:00"},{"name":"Emmett","neighborhood":"Fishtown / Northern Liberties","cuisine":"American","vibe":"Casual","priority":"Medium","notes":"#10 on 2025 Top 25. Rating 9.3. Philly Mag's 2026 pick \u2014 dry-aged duck, tangy fruits, woodsmoke, off-center pastas.","website":"https://emmettphilly.com","google_rating":4.6,"id":"1700006240000","added":"2025-01-01T00:00:00"},{"name":"River Twice","neighborhood":"East Passyunk","cuisine":"American","vibe":"Date Night","priority":"High","notes":"#11 on 2025 Top 25. Rating 9.2. Highly praised East Passyunk American \u2014 seasonal, precise.","website":"https://rivertwicerestaurant.com","google_rating":4.6,"id":"1700006180000","added":"2025-01-01T00:00:00"},{"name":"Blue Corn Restaurant","neighborhood":"South Philly","cuisine":"Mexican","vibe":"Casual","priority":"Medium","notes":"#12 on 2025 Top 25. Rating 9.2. Beloved Mexican on South 9th.","website":"https://bluecornmexphilly.com","google_rating":4.6,"id":"1700006120000","added":"2025-01-01T00:00:00"},{"name":"Illata","neighborhood":"Rittenhouse / Graduate Hospital","cuisine":"Other","vibe":"Date Night","priority":"Medium","notes":"#13 on 2025 Top 25. Rating 9.2. Latin American on Sansom St.","website":"https://illataphl.com","google_rating":4.6,"id":"1700006060000","added":"2025-01-01T00:00:00"},{"name":"Zahav","neighborhood":"Old City / Society Hill","cuisine":"Mediterranean","vibe":"Date Night","priority":"High","notes":"#14 on 2025 Top 25. Rating 9.2. Solomonov's flagship modern Israeli \u2014 James Beard winner for Outstanding Restaurant.","website":"https://zahavrestaurant.com","google_rating":4.7,"id":"1700006000000","added":"2025-01-01T00:00:00"},{"name":"C\u00e0ph\u00ea Roasters","neighborhood":"Fishtown / Northern Liberties","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"#15 on 2025 Top 25. Rating 9.1. Vietnamese coffee roaster and cafe in Kensington.","website":"https://capheroasters.com","google_rating":4.6,"id":"1700005940000","added":"2025-01-01T00:00:00"},{"name":"Vetri Cucina","neighborhood":"Center City","cuisine":"Italian","vibe":"Special Occasion","priority":"High","notes":"#16 on 2025 Top 25. Rating 9.1. Mark Vetri's flagship Italian \u2014 one of Philly's most celebrated fine dining institutions.","website":"https://vetricucina.com","google_rating":4.7,"id":"1700005880000","added":"2025-01-01T00:00:00"},{"name":"Angelo's Pizzeria","neighborhood":"South Philly","cuisine":"Pizza","vibe":"Casual","priority":"High","notes":"#17 on 2025 Top 25. Rating 9.1. Danny DiGiampietro's acclaimed South Philly pizza institution.","website":"https://angelospizzaphilly.com","google_rating":4.5,"id":"1700005820000","added":"2025-01-01T00:00:00"},{"name":"South Philly Barbacoa","neighborhood":"South Philly","cuisine":"Mexican","vibe":"Casual","priority":"High","notes":"#18 on 2025 Top 25. Rating 9.1. Cristina Martinez's iconic weekend barbacoa \u2014 a James Beard winner.","website":"https://southphillybarbacoa.store","google_rating":4.7,"id":"1700005760000","added":"2025-01-01T00:00:00"},{"name":"Heavy Metal Sausage Co.","neighborhood":"South Philly","cuisine":"American","vibe":"Casual","priority":"Medium","notes":"#19 on 2025 Top 25. Rating 9.1. Rock-themed sausage shop with a cult following.","website":"https://heavymetalsausage.com","google_rating":4.7,"id":"1700005700000","added":"2025-01-01T00:00:00"},{"name":"Little Fish","neighborhood":"South Philly","cuisine":"Seafood","vibe":"Date Night","priority":"High","notes":"#20 on 2025 Top 25. Rating 9.0. Tiny, acclaimed BYOB seafood on South 6th \u2014 reservations required months out.","website":"https://littlefishbyob.com","google_rating":4.7,"id":"1700005640000","added":"2025-01-01T00:00:00"},{"name":"Sang Kee Peking Duck House","neighborhood":"Center City","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"#21 on 2025 Top 25. Rating 9.0. Chinatown institution \u2014 house-smoked duck, noodle soups.","website":"https://sangkeechinatown.com","google_rating":4.3,"id":"1700005580000","added":"2025-01-01T00:00:00"},{"name":"El Chingon","neighborhood":"South Philly","cuisine":"Mexican","vibe":"Casual","priority":"Medium","notes":"#22 on 2025 Top 25. Rating 9.0. Modern Mexican on South 10th. Also on 2026 list.","website":"https://elchingonphilly.com","google_rating":4.5,"id":"1700005520000","added":"2025-01-01T00:00:00"},{"name":"Dante & Luigi's","neighborhood":"South Philly","cuisine":"Italian","vibe":"Casual","priority":"Medium","notes":"#23 on 2025 Top 25. Rating 9.0. One of the oldest Italian restaurants in Philadelphia \u2014 old-school South Philly red gravy.","website":"https://danteandluigis.com","google_rating":4.5,"id":"1700005460000","added":"2025-01-01T00:00:00"},{"name":"Middle Child Clubhouse","neighborhood":"Fishtown / Northern Liberties","cuisine":"American","vibe":"Casual","priority":"Medium","notes":"#24 on 2025 Top 25. Rating 9.0. The bigger sibling of Middle Child sandwich shop \u2014 creative American in NoLibs.","website":"https://middlechildphilly.com","google_rating":4.3,"id":"1700005400000","added":"2025-01-01T00:00:00"},{"name":"CJ & D's Trenton Tomato Pie","neighborhood":"East Passyunk","cuisine":"Pizza","vibe":"Casual","priority":"Medium","notes":"#25 on 2025 Top 25. Rating 9.0. Trenton-style tomato pie on East Passyunk Ave.","website":"https://www.instagram.com/cjdtomatopies/","google_rating":4.6,"id":"1700005340000","added":"2025-01-01T00:00:00"},{"name":"Laurel","neighborhood":"East Passyunk","cuisine":"American","vibe":"Date Night","priority":"High","notes":"2026 best list. Google 4.8. BYOB fine dining on East Passyunk \u2014 one of the city's most refined tasting menu experiences.","website":"https://laurelphilly.com","google_rating":4.8,"id":"1700005280000","added":"2025-01-01T00:00:00"},{"name":"Laser Wolf","neighborhood":"Fishtown / Northern Liberties","cuisine":"Mediterranean","vibe":"Casual","priority":"High","notes":"2026 best list. Google 4.7. Solomonov \u2014 Israeli charcoal grill on a Fishtown rooftop. Spectacular spreads and grilled meats.","website":"https://laserwolfphilly.com","google_rating":4.7,"id":"1700005220000","added":"2025-01-01T00:00:00"},{"name":"Le Virt\u00f9","neighborhood":"Fishtown / Northern Liberties","cuisine":"Italian","vibe":"Date Night","priority":"Medium","notes":"2026 best list. Google 4.7. Abruzzo-focused Italian BYOB in Fishtown \u2014 handmade pasta, cured meats.","website":"https://levirtuphilly.com","google_rating":4.7,"id":"1700005160000","added":"2025-01-01T00:00:00"},{"name":"White Yak","neighborhood":"Center City","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"2026 best list. Google 4.7. Tibetan/Nepali on N 11th \u2014 momos, thukpa, warming stews.","website":"https://whiteyakrestaurant.com","google_rating":4.7,"id":"1700005100000","added":"2025-01-01T00:00:00"},{"name":"Meetinghouse","neighborhood":"Old City / Society Hill","cuisine":"American","vibe":"Date Night","priority":"Medium","notes":"2026 best list. Google 4.7. Intimate American in Old City.","website":"https://meetinghousephilly.com","google_rating":4.7,"id":"1700005040000","added":"2025-01-01T00:00:00"},{"name":"Georgian Bread","neighborhood":"Center City","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"2026 best list. Google 4.7. Georgian bakery/restaurant on N 11th \u2014 khachapuri, churchkhela, Adjarian cheese bread.","website":"https://georgianbread.com","google_rating":4.7,"id":"1700004980000","added":"2025-01-01T00:00:00"},{"name":"Mish Mish","neighborhood":"Fishtown / Northern Liberties","cuisine":"Mediterranean","vibe":"Casual","priority":"Medium","notes":"2026 best list. Google 4.7. Israeli-inspired Middle Eastern \u2014 hummus, sabich, grilled meats.","website":"https://mishmishphilly.com","google_rating":4.7,"id":"1700004920000","added":"2025-01-01T00:00:00"},{"name":"Suraya","neighborhood":"Fishtown / Northern Liberties","cuisine":"Mediterranean","vibe":"Date Night","priority":"High","notes":"2026 best list. Google 4.7. Lebanese all-day restaurant with a stunning garden \u2014 one of Philly's most beautiful spaces.","website":"https://surayaphilly.com","google_rating":4.7,"id":"1700004860000","added":"2025-01-01T00:00:00"},{"name":"Honeysuckle","neighborhood":"Old City / Society Hill","cuisine":"American","vibe":"Date Night","priority":"Medium","notes":"2026 best list. Google 4.6. Creative American in Washington Square West.","website":"https://honeysucklephilly.com","google_rating":4.6,"id":"1700004800000","added":"2025-01-01T00:00:00"},{"name":"Grandma's Philly","neighborhood":"South Philly","cuisine":"American","vibe":"Casual","priority":"Medium","notes":"2026 best list. Google 4.6. Cozy South Philly comfort food.","website":"https://grandmasphilly.com","google_rating":4.6,"id":"1700004740000","added":"2025-01-01T00:00:00"},{"name":"Zeppoli","neighborhood":"East Passyunk","cuisine":"Italian","vibe":"Date Night","priority":"Medium","notes":"2026 best list. Google 4.6. Southern Italian BYOB on East Passyunk \u2014 acclaimed pasta and seafood.","website":"https://zeppoli.us","google_rating":4.6,"id":"1700004680000","added":"2025-01-01T00:00:00"},{"name":"Roxanne","neighborhood":"East Passyunk","cuisine":"American","vibe":"Date Night","priority":"Medium","notes":"2026 best list. Google 4.6. Exciting newer spot on East Passyunk.","website":"https://roxannephilly.com","google_rating":4.6,"id":"1700004620000","added":"2025-01-01T00:00:00"},{"name":"Superfolie","neighborhood":"South Philly","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"2026 best list. Google 4.6. French-influenced BYOB on South 4th.","website":"https://superfolie.com","google_rating":4.6,"id":"1700004560000","added":"2025-01-01T00:00:00"},{"name":"Tabachoy","neighborhood":"South Philly","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"2026 best list. Google 4.6. Filipino on South 9th \u2014 lumpia, kare-kare, creative takes on classics.","website":"https://tabachoyphilly.com","google_rating":4.6,"id":"1700004500000","added":"2025-01-01T00:00:00"},{"name":"Doro Bet","neighborhood":"South Philly","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"2026 best list. Google 4.6. Ethiopian on South 8th \u2014 communal injera platters, stews.","website":"https://dorobet.com","google_rating":4.6,"id":"1700004440000","added":"2025-01-01T00:00:00"},{"name":"Stina Pizzeria","neighborhood":"Center City","cuisine":"Pizza","vibe":"Casual","priority":"Medium","notes":"2026 best list. Google 4.5. Creative Neapolitan-style pizza on Locust St.","website":"https://stinapizzeria.com","google_rating":4.5,"id":"1700004380000","added":"2025-01-01T00:00:00"},{"name":"Gabriella's Vietnam","neighborhood":"East Passyunk","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"2026 best list. Google 4.5. Vietnamese on East Passyunk \u2014 pho, banh mi, creative rice plates.","website":"https://gabriellasvietnam.com","google_rating":4.5,"id":"1700004320000","added":"2025-01-01T00:00:00"},{"name":"Autana","neighborhood":"Center City","cuisine":"Other","vibe":"Date Night","priority":"Medium","notes":"2026 best list. Google 4.5. Venezuelan on Camac St \u2014 arepas, teque\u00f1os, creative cocktails.","website":"https://autanarestaurant.com","google_rating":4.5,"id":"1700004260000","added":"2025-01-01T00:00:00"},{"name":"Tulip Pasta & Wine Bar","neighborhood":"Fishtown / Northern Liberties","cuisine":"Italian","vibe":"Date Night","priority":"Medium","notes":"2026 best list. Google 4.5. Fresh pasta and natural wine in Fishtown.","website":"https://tulippastaandwine.com","google_rating":4.5,"id":"1700004200000","added":"2025-01-01T00:00:00"},{"name":"June BYOB","neighborhood":"East Passyunk","cuisine":"American","vibe":"Date Night","priority":"Medium","notes":"2026 best list. Google 4.5. Well-regarded BYOB on East Passyunk.","website":"https://junebyob.com","google_rating":4.5,"id":"1700004140000","added":"2025-01-01T00:00:00"},{"name":"South Restaurant & Jazz Club","neighborhood":"South Philly","cuisine":"American","vibe":"Date Night","priority":"Medium","notes":"2026 best list. Google 4.5. Live jazz supper club on Broad St \u2014 dinner and a show.","website":"https://southphilly.com","google_rating":4.5,"id":"1700004080000","added":"2025-01-01T00:00:00"},{"name":"Pietramala","neighborhood":"Rittenhouse / Graduate Hospital","cuisine":"Italian","vibe":"Date Night","priority":"Medium","notes":"2026 best list. Google 4.5. Italian on Rittenhouse Square \u2014 handmade pasta, great patio views.","website":"https://pietramala.com","google_rating":4.5,"id":"1700004020000","added":"2025-01-01T00:00:00"},{"name":"Ground Provisions","neighborhood":"Rittenhouse / Graduate Hospital","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"2026 best list. Google 4.5. Jamaican on Spruce St \u2014 jerk chicken, roti, plantains.","website":"https://groundprovisionsphilly.com","google_rating":4.5,"id":"1700003960000","added":"2025-01-01T00:00:00"},{"name":"Sagami","neighborhood":"Center City","cuisine":"Japanese","vibe":"Date Night","priority":"Medium","notes":"2026 best list. Google 4.5. Traditional Japanese on Chestnut St \u2014 sushi, sashimi, bento.","website":"https://sagami-restaurant.com","google_rating":4.5,"id":"1700003900000","added":"2025-01-01T00:00:00"},{"name":"High Street on Market","neighborhood":"Old City / Society Hill","cuisine":"American","vibe":"Casual","priority":"Medium","notes":"2026 best list. Google 4.4. Acclaimed bread/brunch spot near Reading Terminal \u2014 outstanding charcuterie, seasonal menu.","website":"https://highstreetonmarket.com","google_rating":4.4,"id":"1700003840000","added":"2025-01-01T00:00:00"},{"name":"Juana Tamale","neighborhood":"East Passyunk","cuisine":"Mexican","vibe":"Casual","priority":"Medium","notes":"2026 best list. Google 4.4. Tamales and Mexican street food on East Passyunk.","website":"https://juanatamale.com","google_rating":4.4,"id":"1700003780000","added":"2025-01-01T00:00:00"},{"name":"Lark","neighborhood":"Center City","cuisine":"American","vibe":"Date Night","priority":"Medium","notes":"2026 best list. Google 4.4. Modern American on S 18th.","website":"https://larkphilly.com","google_rating":4.4,"id":"1700003720000","added":"2025-01-01T00:00:00"},{"name":"Parc","neighborhood":"Rittenhouse / Graduate Hospital","cuisine":"Other","vibe":"Date Night","priority":"Medium","notes":"2026 best list. Google 4.4. French brasserie on Rittenhouse Square \u2014 Stephen Starr. Classic moules frites, steak frites, great people-watching patio.","website":"https://parc-restaurant.com","google_rating":4.4,"id":"1700003660000","added":"2025-01-01T00:00:00"},{"name":"Andiario","neighborhood":"Center City","cuisine":"Italian","vibe":"Date Night","priority":"High","notes":"2026 best list. Google 4.4. Pasta-focused, originally from West Chester \u2014 handmade pasta changes nightly.","website":"https://andiariophilly.com","google_rating":4.4,"id":"1700003600000","added":"2025-01-01T00:00:00"},{"name":"Dim Sum Garden","neighborhood":"Center City","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"2026 best list. Google 4.3. Chinatown \u2014 known for soup dumplings (xiao long bao).","website":"https://dimsumonline.com","google_rating":4.3,"id":"1700003540000","added":"2025-01-01T00:00:00"},{"name":"Down North Pizza","neighborhood":"Other / Suburbs","cuisine":"Pizza","vibe":"Casual","priority":"Medium","notes":"2026 best list. Google 4.1. Detroit-style pizza in North Philly \u2014 community-focused, James Beard nominated.","website":"https://downnorthpizza.com","google_rating":4.1,"id":"1700003480000","added":"2025-01-01T00:00:00"},{"name":"Hardena","neighborhood":"East Passyunk","cuisine":"Other","vibe":"Casual","priority":"Low","notes":"2026 best list. Google 4.2. Indonesian on East Passyunk \u2014 a quiet neighborhood institution.","website":"https://hardenaphilly.com","google_rating":4.2,"id":"1700003420000","added":"2025-01-01T00:00:00"},{"name":"Cafe Nhan","neighborhood":"South Philly","cuisine":"Other","vibe":"Casual","priority":"Low","notes":"2026 best list. Google 4.5. Vietnamese on S 9th \u2014 banh mi, pho, broken rice plates.","website":"http://cafenhan.com","google_rating":4.5,"id":"1700003360000","added":"2025-01-01T00:00:00"},{"name":"Corinne's Place","neighborhood":"South Philly","cuisine":"American","vibe":"Casual","priority":"Low","notes":"2026 best list. Google 4.5. Soul food on Broad St \u2014 legendary fried chicken and waffles.","website":"http://corinnesplace.com","google_rating":4.5,"id":"1700003300000","added":"2025-01-01T00:00:00"},{"name":"Cantina La Martina","neighborhood":"East Passyunk","cuisine":"Mexican","vibe":"Casual","priority":"Low","notes":"2026 best list. Google 4.4. Mexican on East Passyunk \u2014 James Beard-nominated.","website":"https://cantinalamartina.com","google_rating":4.4,"id":"1700003240000","added":"2025-01-01T00:00:00"},{"name":"Casa Mexico","neighborhood":"Other / Suburbs","cuisine":"Mexican","vibe":"Casual","priority":"Low","notes":"2026 best list. Google 4.1. Mexican in Northeast Philly.","website":"https://casamexiphosphila.com","google_rating":4.1,"id":"1700003180000","added":"2025-01-01T00:00:00"},{"name":"Kim's Restaurant","neighborhood":"South Philly","cuisine":"Other","vibe":"Casual","priority":"Low","notes":"2026 best list. Google 4.2. Korean/Japanese fusion on S 9th.","website":"http://kims-philly.com","google_rating":4.2,"id":"1700003120000","added":"2025-01-01T00:00:00"},{"name":"China Gourmet","neighborhood":"South Philly","cuisine":"Other","vibe":"Casual","priority":"Low","notes":"2026 best list. Google 4.4. Chinese on S 13th \u2014 Cantonese classics.","website":"http://chinagourmetphilly.com","google_rating":4.4,"id":"1700003060000","added":"2025-01-01T00:00:00"},{"name":"Buddakan","neighborhood":"Old City / Society Hill","cuisine":"Other","vibe":"Date Night","priority":"Medium","notes":"Stephen Starr \u2014 iconic Pan-Asian. Old City landmark since 1998 \u2014 dramatic two-story dining room.","website":"https://buddakan.com","google_rating":4.4,"id":"1700003000000","added":"2025-01-01T00:00:00"},{"name":"Morimoto","neighborhood":"Old City / Society Hill","cuisine":"Japanese","vibe":"Special Occasion","priority":"Medium","notes":"Stephen Starr / Iron Chef Morimoto. Opened 2001 \u2014 theatrical omakase and high-end Japanese.","website":"https://morimotorestaurant.com","google_rating":4.4,"id":"1700002940000","added":"2025-01-01T00:00:00"},{"name":"Barclay Prime","neighborhood":"Rittenhouse / Graduate Hospital","cuisine":"Steakhouse","vibe":"Special Occasion","priority":"Medium","notes":"Stephen Starr steakhouse. Known for the $120 Philly cheesesteak with Wagyu and foie gras \u2014 library setting.","website":"https://barclayprime.com","google_rating":4.5,"id":"1700002880000","added":"2025-01-01T00:00:00"},{"name":"Talula's Garden","neighborhood":"Old City / Society Hill","cuisine":"American","vibe":"Date Night","priority":"Medium","notes":"Turney/Safran \u2014 farm-to-table on Washington Square Park. Opened 2011 \u2014 beautiful outdoor garden.","website":"https://talulasgarden.com","google_rating":4.5,"id":"1700002820000","added":"2025-01-01T00:00:00"},{"name":"Amada","neighborhood":"Old City / Society Hill","cuisine":"Mediterranean","vibe":"Date Night","priority":"Medium","notes":"Jose Garces \u2014 Spanish tapas flagship. Opened 2005 \u2014 cochinillo asado, gambas al ajillo, great sherry list.","website":"https://amadarestaurant.com","google_rating":4.4,"id":"1700002760000","added":"2025-01-01T00:00:00"},{"name":"Volver","neighborhood":"Center City","cuisine":"American","vibe":"Special Occasion","priority":"High","notes":"Jose Garces \u2014 fine dining inside the Kimmel Center. Opened 2014 \u2014 tasting menu only, theatrical plating.","website":"https://volverrestaurant.com","google_rating":4.4,"id":"1700002700000","added":"2025-01-01T00:00:00"},{"name":"K'Far","neighborhood":"Rittenhouse / Graduate Hospital","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"Michael Solomonov \u2014 Israeli cafe and bakery. Opened 2019 \u2014 outstanding shakshuka, laffa sandwiches, burekas.","website":"https://kfarphilly.com","google_rating":4.6,"id":"1700002640000","added":"2025-01-01T00:00:00"},{"name":"Fiorella","neighborhood":"Other / Suburbs","cuisine":"Italian","vibe":"Casual","priority":"Medium","notes":"Mark Vetri \u2014 neighborhood Italian in East Falls. Opened 2020 \u2014 handmade pasta, wood-fired dishes, relaxed vibe.","website":"https://fiorellaeastfalls.com","google_rating":4.5,"id":"1700002580000","added":"2025-01-01T00:00:00"},{"name":"Giuseppe & Sons","neighborhood":"Center City","cuisine":"Italian","vibe":"Date Night","priority":"Medium","notes":"Michael Schulson \u2014 Italian-American in the Divine Lorraine Hotel. Opened 2018 \u2014 gorgeous space, carbonara, whole roasted fish.","website":"https://giuseppeandsons.com","google_rating":4.4,"id":"1700002520000","added":"2025-01-01T00:00:00"},{"name":"Barbuzzo","neighborhood":"Center City","cuisine":"Mediterranean","vibe":"Casual","priority":"Medium","notes":"Turney/Safran \u2014 Mediterranean small plates on 13th Street. Opened 2010 \u2014 salted caramel budino is legendary.","website":"https://barbuzzo.com","google_rating":4.5,"id":"1700002460000","added":"2025-01-01T00:00:00"},{"name":"Bud & Marilyn's","neighborhood":"Center City","cuisine":"American","vibe":"Casual","priority":"Medium","notes":"Turney/Safran \u2014 comfort food American on Naudain. Opened 2015 \u2014 deviled eggs, biscuits, fried chicken.","website":"https://budandmarilyns.com","google_rating":4.4,"id":"1700002400000","added":"2025-01-01T00:00:00"},{"name":"Borromini","neighborhood":"Rittenhouse / Graduate Hospital","cuisine":"Italian","vibe":"Date Night","priority":"Medium","notes":"New Italian on Walnut St \u2014 Roman-inspired pastas, wood-fired cooking. Google 4.1.","website":"https://borrominiristorante.com","google_rating":4.1,"id":"1700002340000","added":"2025-01-01T00:00:00"},{"name":"The Borscht Belt","neighborhood":"Chestnut Hill / Mt. Airy","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"Jewish deli on Germantown Ave \u2014 pastrami, latkes, classic deli fare.","website":"https://theborschtbelt.com","google_rating":4.3,"id":"1700002280000","added":"2025-01-01T00:00:00"},{"name":"Caf\u00e9 Duskaia","neighborhood":"South Philly","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"Nicaraguan coffee/cafe on S 9th. Google 5.0.","website":"https://duskaiacoffee.com","google_rating":5.0,"id":"1700002220000","added":"2025-01-01T00:00:00"},{"name":"Casa Borinque\u00f1a","neighborhood":"Fishtown / Northern Liberties","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"Vegan Puerto Rican in Fishtown \u2014 mofongo, pernil-style jackfruit. Google 4.9.","website":"https://casaborinquena.com","google_rating":4.9,"id":"1700002160000","added":"2025-01-01T00:00:00"},{"name":"Kissho House","neighborhood":"Center City","cuisine":"Japanese","vibe":"Date Night","priority":"High","notes":"Japanese omakase on Locust St \u2014 intimate counter, seasonal nigiri. Google 4.8.","website":"https://kisshohouse.com","google_rating":4.8,"id":"1700002100000","added":"2025-01-01T00:00:00"},{"name":"Mecha Noodle Bar","neighborhood":"Fishtown / Northern Liberties","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"Vietnamese/Japanese noodle bar on N Front St \u2014 pho, ramen, creative fusion. Google 4.7.","website":"https://mechanoodlebar.com","google_rating":4.7,"id":"1700002040000","added":"2025-01-01T00:00:00"},{"name":"Newsroom Philly","neighborhood":"Chestnut Hill / Mt. Airy","cuisine":"Other","vibe":"Date Night","priority":"Medium","notes":"Japanese-Latin speakeasy in Germantown \u2014 creative cocktails, izakaya bites. Google 4.6.","website":"https://newsroomphilly.com","google_rating":4.6,"id":"1700001980000","added":"2025-01-01T00:00:00"},{"name":"Tesiny","neighborhood":"South Philly","cuisine":"Seafood","vibe":"Date Night","priority":"Medium","notes":"Raw bar, seafood & grill on Dickinson St \u2014 oysters, crudo, wood-fired fish.","website":"https://tesiny.com","google_rating":4.5,"id":"1700001920000","added":"2025-01-01T00:00:00"},{"name":"Tlali","neighborhood":"Other / Suburbs","cuisine":"Mexican","vibe":"Casual","priority":"Medium","notes":"Mexican in Upper Darby \u2014 traditional moles, carnitas, handmade tortillas.","website":"https://facebook.com/share/1AUQeo2Td1","google_rating":4.4,"id":"1700001860000","added":"2025-01-01T00:00:00"},{"name":"Tu Rinconcito","neighborhood":"Old City / Society Hill","cuisine":"Mexican","vibe":"Casual","priority":"High","notes":"Mexican all-day cafe on N 3rd St \u2014 breakfast burritos, enchiladas, aguas frescas. Google 4.9.","website":"https://turinconcitophilly.com","google_rating":4.9,"id":"1700001800000","added":"2025-01-01T00:00:00"},{"name":"Turmeric Indian Kitchen","neighborhood":"Center City","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"Indian on Spring Garden \u2014 curries, biryanis, freshly baked naan. Google 5.0.","website":"https://turmericphilly.com","google_rating":5.0,"id":"1700001740000","added":"2025-01-01T00:00:00"},{"name":"Cormorant Corner Bar","neighborhood":"Fishtown / Northern Liberties","cuisine":"American","vibe":"Casual","priority":"Low","notes":"Cocktail bar on Frankford Ave \u2014 creative small plates, natural wine.","website":"https://cormorantphl.com","google_rating":4.2,"id":"1700001680000","added":"2025-01-01T00:00:00"},{"name":"Medium Rare","neighborhood":"Fishtown / Northern Liberties","cuisine":"Steakhouse","vibe":"Casual","priority":"Medium","notes":"Steak-frites concept on Frankford Ave \u2014 fixed menu, unlimited frites. Google 4.0.","website":"https://mediumrarerestaurant.com","google_rating":4.0,"id":"1700001620000","added":"2025-01-01T00:00:00"},{"name":"Shay's Steaks and More","neighborhood":"Center City","cuisine":"American","vibe":"Casual","priority":"Medium","notes":"Cheesesteaks on N 16th \u2014 creative variations, house-made sauces. Google 4.9.","website":"https://instagram.com/shaysphiladelphia","google_rating":4.9,"id":"1700001560000","added":"2025-01-01T00:00:00"},{"name":"Mana Modern Chinese","neighborhood":"Fishtown / Northern Liberties","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"Modern Chinese on N 2nd St \u2014 dim sum-style sharing plates, creative takes on classics.","website":"https://instagram.com/mana.philly","google_rating":4.5,"id":"1700001500000","added":"2025-01-01T00:00:00"},{"name":"Lulu Cafe","neighborhood":"Center City","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"Taiwanese cafe in University City \u2014 bubble tea, scallion pancake sandwiches. Google 4.4.","website":"http://lulucafeusa.com","google_rating":4.4,"id":"1700001440000","added":"2025-01-01T00:00:00"},{"name":"Pinolero","neighborhood":"Other / Suburbs","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"Nicaraguan in Tioga \u2014 vigoron, nacatamal, gallopinto. Google 5.0.","website":"https://instagram.com/pinolerophilly","google_rating":5.0,"id":"1700001380000","added":"2025-01-01T00:00:00"},{"name":"Autograph Brasserie","neighborhood":"Main Line","cuisine":"American","vibe":"Date Night","priority":"High","notes":"Wayne's marquee fine dining spot \u2014 1,000+ celebrity autographs on walls, premium steaks, fresh seafood, handmade pasta, lobster cavatelli. Hollywood-glam d\u00e9cor.","website":"https://autographbrasserie.com","google_rating":4.5,"id":"1700001320000","added":"2025-01-01T00:00:00"},{"name":"Rosalie Wayne","neighborhood":"Main Line","cuisine":"Italian","vibe":"Date Night","priority":"High","notes":"Fearless Restaurants' Italian in the historic Wayne Hotel \u2014 fresh pasta made daily, Sunday Gravy Shakshuka brunch, lovely Tuscan vibe. Great patio.","website":"https://rosaliewayne.com","google_rating":4.5,"id":"1700001260000","added":"2025-01-01T00:00:00"},{"name":"Savona","neighborhood":"Main Line","cuisine":"Other","vibe":"Special Occasion","priority":"High","notes":"Main Line institution since the 1970s in a historic 1765 Gulph Mills building \u2014 Riviera-inspired fine dining, marble bar, wine lounge, outdoor patio.","website":"https://savonarestaurant.com","google_rating":4.4,"id":"1700001200000","added":"2025-01-01T00:00:00"},{"name":"The Pullman","neighborhood":"Main Line","cuisine":"American","vibe":"Date Night","priority":"High","notes":"Housed in Bryn Mawr's historic train station \u2014 retro rail-car d\u00e9cor, supper-club classics, strong martini program. Oysters, tuna nachos, expertly mixed nightcaps.","website":"https://thepullmanrestaurant.com","google_rating":4.5,"id":"1700001140000","added":"2025-01-01T00:00:00"},{"name":"Triple Crown","neighborhood":"Main Line","cuisine":"American","vibe":"Date Night","priority":"High","notes":"Radnor Hotel's hottest new restaurant \u2014 equestrian-chic d\u00e9cor, polished American menu from Fearless Restaurants. Already one of the most in-demand reservations on the Main Line.","website":"https://triplecrownradnor.com","google_rating":4.6,"id":"1700001080000","added":"2025-01-01T00:00:00"},{"name":"Nectar","neighborhood":"Main Line","cuisine":"Other","vibe":"Date Night","priority":"High","notes":"Berwyn institution \u2014 Asian-inspired, French-infused tasting menus. Wild Alaskan salmon, halibut, grass-fed beef. Eclectic creative menu, extensive wine list.","website":"https://tastenectar.com","google_rating":4.4,"id":"1700001020000","added":"2025-01-01T00:00:00"},{"name":"White Dog Caf\u00e9 Wayne","neighborhood":"Main Line","cuisine":"American","vibe":"Casual","priority":"Medium","notes":"Farm-fresh comfort in a playful dog-themed setting in Wayne and Haverford \u2014 rotating local seasonal menu, lively bar program.","website":"https://whitedog.com","google_rating":4.3,"id":"1700000960000","added":"2025-01-01T00:00:00"},{"name":"333 Belrose","neighborhood":"Main Line","cuisine":"American","vibe":"Date Night","priority":"Medium","notes":"Radnor stalwart \u2014 Asian-inflected modern American. Brussels sprouts with ginger-lime aioli are legendary. Sleek setting, solid wine list.","website":"https://333belrose.com","google_rating":4.3,"id":"1700000900000","added":"2025-01-01T00:00:00"},{"name":"Terrain Caf\u00e9 Devon","neighborhood":"Main Line","cuisine":"American","vibe":"Casual","priority":"Medium","notes":"Inside Anthropologie's garden store in Devon \u2014 beautiful greenhouse setting, farm-to-table brunch and lunch. One of the prettiest dining rooms on the Main Line.","website":"https://shopterrain.com/pages/devon-restaurant","google_rating":4.3,"id":"1700000840000","added":"2025-01-01T00:00:00"},{"name":"Bar Lucca","neighborhood":"Main Line","cuisine":"Italian","vibe":"Date Night","priority":"High","notes":"Conshohocken standout from Pieri Hospitality Group \u2014 creative pasta concepts, strong local sourcing. Chef Will Langlois is one of the most exciting on the Main Line right now.","website":"https://barlucca.com","google_rating":4.6,"id":"1700000780000","added":"2025-01-01T00:00:00"},{"name":"Rye","neighborhood":"Main Line","cuisine":"American","vibe":"Date Night","priority":"High","notes":"BYOB in Media \u2014 Chef Ryan Sulikowski's seasonal American with pasta front and center. Lumache with 'nduja, handmade gnocchi. One of the best BYOBs in the suburbs.","website":"https://ryebyob.com","google_rating":4.7,"id":"1700000720000","added":"2025-01-01T00:00:00"},{"name":"Amis Trattoria Devon","neighborhood":"Main Line","cuisine":"Italian","vibe":"Casual","priority":"Medium","notes":"Mark Vetri's Devon trattoria in Terrain \u2014 twice-fried artichokes, rigatoni Bolognese, smoked turkey and burrata sandwich. Casual and reliable.","website":"https://amistrattoria.com","google_rating":4.3,"id":"1700000660000","added":"2025-01-01T00:00:00"},{"name":"Fleming's Prime Steakhouse","neighborhood":"Main Line","cuisine":"Steakhouse","vibe":"Special Occasion","priority":"Medium","notes":"Classic Prime steakhouse in Radnor Financial Center \u2014 reliable for business dinners and celebrations. Excellent wine program.","website":"https://flemingssteakhouse.com","google_rating":4.4,"id":"1700000600000","added":"2025-01-01T00:00:00"},{"name":"Takumi","neighborhood":"Main Line","cuisine":"Japanese","vibe":"Date Night","priority":"Medium","notes":"Modern Japanese sushi on the Main Line in Wayne \u2014 BYOB, fresh-selected fish daily, happy hour rolls, hibachi options.","website":"https://takumisushi.com","google_rating":4.3,"id":"1700000540000","added":"2025-01-01T00:00:00"},{"name":"Fattoush","neighborhood":"Main Line","cuisine":"Mediterranean","vibe":"Casual","priority":"Medium","notes":"Super-fresh Mediterranean in Ardmore \u2014 falafel, hummus, stuffed grape leaves, beef and chicken shawarma. One of the best casual spots on the Main Line.","website":"https://fattoushrestaurant.com","google_rating":4.4,"id":"1700000480000","added":"2025-01-01T00:00:00"},{"name":"Greystone Oyster Bar","neighborhood":"Main Line","cuisine":"Seafood","vibe":"Date Night","priority":"High","notes":"West Chester's best seafood spot \u2014 fresh oysters, crudo, pristine fish, excellent pasta. One of the most exciting suburban restaurants in the region.","website":"https://greystoneoysterbar.com","google_rating":4.7,"id":"1700000420000","added":"2025-01-01T00:00:00"},{"name":"Pietro's Prime","neighborhood":"Main Line","cuisine":"Steakhouse","vibe":"Date Night","priority":"Medium","notes":"Upscale steakhouse in West Chester \u2014 prime cuts, fresh seafood, extensive wine list. A Main Line special-occasion classic.","website":"https://pietrosprime.com","google_rating":4.4,"id":"1700000360000","added":"2025-01-01T00:00:00"},{"name":"Founding Farmers KOP","neighborhood":"Main Line","cuisine":"American","vibe":"Casual","priority":"Medium","notes":"Pennsylvania farmhouse concept in King of Prussia Town Center \u2014 scratch cooking from farmers they know, weekend brunch buffet, craft cocktails.","website":"https://wearefoundersfarmers.com","google_rating":4.3,"id":"1700000300000","added":"2025-01-01T00:00:00"},{"name":"The Crown","neighborhood":"Main Line","cuisine":"Other","vibe":"Casual","priority":"Medium","notes":"British fish and chips in Glen Mills \u2014 beer-battered New England cod, thick fries, mushy peas, tartan-plaid booths.","website":"https://thecrownglenmills.com","google_rating":4.3,"id":"1700000240000","added":"2025-01-01T00:00:00"},{"name":"Bar Sera","neighborhood":"Main Line","cuisine":"Italian","vibe":"Date Night","priority":"Medium","notes":"Pieri Hospitality Group's Italian bar concept in Conshohocken \u2014 craft cocktails, charcuterie, pasta. Sibling to Bar Lucca.","website":"https://barsera.com","google_rating":4.4,"id":"1700000180000","added":"2025-01-01T00:00:00"},{"name":"Silverspoon","neighborhood":"Main Line","cuisine":"American","vibe":"Date Night","priority":"High","notes":"BYOB in Wayne \u2014 seasonal American, market-driven, sustainable and heirloom ingredients. Updated regional classics with creative sauces.","website":"https://silverspoonbyob.com","google_rating":4.6,"id":"1700000120000","added":"2025-01-01T00:00:00"},{"name":"StoneRose","neighborhood":"Main Line","cuisine":"American","vibe":"Date Night","priority":"Medium","notes":"Pieri Hospitality Group \u2014 Conshohocken American with creative cocktails and a strong local sourcing ethos.","website":"https://stonerosebar.com","google_rating":4.3,"id":"1700000060000","added":"2025-01-01T00:00:00"}];
+let restaurants=[],editingId=null,currentSort='date';
+
+function normName(n){return n.toLowerCase().replace(/[^a-z0-9]/g,'');}
+
+function load(){
+  // Step 1: always build the full list from seed data — this never fails
+  const base=SEED_DATA.map(x=>({...x,status:'want',my_rating:null}));
+
+  // Step 2: try to overlay personal data from localStorage — if anything fails, silently skip
+  const personal={byName:{},extras:[]};
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const saved=JSON.parse(raw);
+      if(Array.isArray(saved)){
+        const seedNames=new Set(SEED_DATA.map(s=>normName(s.name)));
+        saved.forEach(r=>{
+          const key=normName(r.name);
+          if(seedNames.has(key)){
+            personal.byName[key]={status:r.status||'want',my_rating:r.my_rating||null};
+          }else{
+            personal.extras.push(r);
+          }
+        });
+      }
+    }
+  }catch(e){
+    // localStorage unavailable or corrupt — no problem, seed data still shows
+  }
+
+  // Step 3: merge personal overlays into base
+  restaurants=base.map(r=>{
+    const key=normName(r.name);
+    const p=personal.byName[key];
+    return p?{...r,...p}:r;
+  });
+
+  // Step 4: prepend any user-added restaurants
+  if(personal.extras.length>0){
+    restaurants=[...personal.extras,...restaurants];
+  }
+}
+
+function save(){
+  // Best-effort save — if localStorage is blocked, restaurants still show from seed
+  try{
+    const seedNames=new Set(SEED_DATA.map(s=>normName(s.name)));
+    const toSave=restaurants.map(r=>{
+      const key=normName(r.name);
+      if(seedNames.has(key)){
+        return{name:r.name,status:r.status||'want',my_rating:r.my_rating||null};
+      }
+      return r;
+    });
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(toSave));
+  }catch(e){
+    // localStorage blocked (e.g. private browsing, file:// restrictions) — silently skip
+  }
+}
+
+function updateCounts(){
+  const total=restaurants.length;
+  const been=restaurants.filter(r=>r.status==='been').length;
+  document.getElementById('count-total').textContent=total;
+  document.getElementById('count-want').textContent=total-been;
+  document.getElementById('count-been').textContent=been;
+}
+
+function toggleStatus(id){
+  const r=restaurants.find(x=>x.id===id);
+  if(!r)return;
+  r.status=r.status==='been'?'want':'been';
+  if(r.status==='want')r.my_rating=null;
+  save();render();
+}
+
+function setMyRating(id,val){
+  const r=restaurants.find(x=>x.id===id);
+  if(!r)return;
+  r.my_rating=(r.my_rating===val)?null:val;
+  save();render();
+}
+
+function openModal(id=null){
+  editingId=id;
+  document.getElementById('modal-title').textContent=id?'Edit Restaurant':'Add a Restaurant';
+  if(id){
+    const r=restaurants.find(x=>x.id===id);
+    document.getElementById('f-name').value=r.name;
+    document.getElementById('f-website').value=r.website||'';
+    document.getElementById('f-neighborhood').value=r.neighborhood||'';
+    document.getElementById('f-cuisine').value=r.cuisine||'';
+    document.getElementById('f-vibe').value=r.vibe||'';
+    document.getElementById('f-priority').value=r.priority||'Medium';
+    document.getElementById('f-rating').value=r.google_rating||'';
+    document.getElementById('f-notes').value=r.notes||'';
+  }else{
+    ['f-name','f-website','f-notes','f-rating'].forEach(i=>document.getElementById(i).value='');
+    ['f-neighborhood','f-cuisine','f-vibe'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('f-priority').value='Medium';
+  }
+  document.getElementById('modal-backdrop').classList.add('open');
+  setTimeout(()=>document.getElementById('f-name').focus(),50);
+}
+function closeModal(){document.getElementById('modal-backdrop').classList.remove('open');editingId=null;}
+function handleBackdropClick(e){if(e.target===document.getElementById('modal-backdrop'))closeModal();}
+
+function saveRestaurant(){
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){document.getElementById('f-name').focus();return;}
+  const rr=document.getElementById('f-rating').value.trim();
+  const rating=rr?parseFloat(rr):null;
+  const d={name,website:document.getElementById('f-website').value.trim(),neighborhood:document.getElementById('f-neighborhood').value,cuisine:document.getElementById('f-cuisine').value,vibe:document.getElementById('f-vibe').value,priority:document.getElementById('f-priority').value,google_rating:(!rating||isNaN(rating))?null:rating,notes:document.getElementById('f-notes').value.trim()};
+  if(editingId){
+    const idx=restaurants.findIndex(x=>x.id===editingId);
+    restaurants[idx]={...restaurants[idx],...d};
+  }else{
+    restaurants.unshift({...d,id:Date.now().toString(),added:new Date().toISOString(),status:'want',my_rating:null});
+  }
+  save();closeModal();render();
+}
+
+function exportData(){
+  const json=JSON.stringify(restaurants,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const date=new Date().toISOString().slice(0,10);
+  a.href=url;
+  a.download=`philly-table-backup-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const parsed=JSON.parse(ev.target.result);
+      if(!Array.isArray(parsed))throw new Error('Invalid format');
+      if(!confirm(`This will replace your current ${restaurants.length} restaurants with ${parsed.length} from the backup file.  Continue?`)){
+        e.target.value='';return;
+      }
+      restaurants=parsed;
+      save();
+      render();
+      e.target.value='';
+    }catch(err){
+      alert('Could not read that file.  Make sure it is a Philly Table export (.json).');
+      e.target.value='';
+    }
+  };
+  reader.readAsText(file);
+}
+
+function deleteRestaurant(id){if(!confirm('Remove this restaurant?'))return;restaurants=restaurants.filter(x=>x.id!==id);save();render();}
+
+function getFiltered(){
+  const s=document.getElementById('search').value.toLowerCase();
+  const st=document.getElementById('filter-status').value;
+  const nb=document.getElementById('filter-neighborhood').value;
+  const cu=document.getElementById('filter-cuisine').value;
+  const vi=document.getElementById('filter-vibe').value;
+  const pr=document.getElementById('filter-priority').value;
+  return restaurants.filter(r=>{
+    if(s&&!r.name.toLowerCase().includes(s))return false;
+    if(st&&(r.status||'want')!==st)return false;
+    if(nb&&r.neighborhood!==nb)return false;
+    if(cu&&r.cuisine!==cu)return false;
+    if(vi&&r.vibe!==vi)return false;
+    if(pr&&r.priority!==pr)return false;
+    return true;
+  });
+}
+
+function getSorted(list){
+  if(currentSort==='name')return[...list].sort((a,b)=>a.name.localeCompare(b.name));
+  if(currentSort==='priority'){const o={High:0,Medium:1,Low:2};return[...list].sort((a,b)=>(o[a.priority]??1)-(o[b.priority]??1));}
+  if(currentSort==='grating')return[...list].sort((a,b)=>(b.google_rating||0)-(a.google_rating||0));
+  if(currentSort==='myrating')return[...list].sort((a,b)=>(b.my_rating||0)-(a.my_rating||0));
+  return list;
+}
+
+function vibeClass(v){return{'Date Night':'tag-vibe-date','Casual':'tag-vibe-casual','Family':'tag-vibe-family','Special Occasion':'tag-vibe-special'}[v]||'tag-vibe-casual';}
+function formatDate(iso){if(!iso)return'';const d=new Date(iso);return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function renderGoogleRating(r){if(!r)return'';return`<div class="google-rating"><span class="star">&#9733;</span><span class="rating-num">${r.toFixed(1)}</span></div>`;}
+
+function renderMyRating(id,val){
+  const pips=[];
+  for(let i=1;i<=10;i++){
+    const filled=val&&i<=val?'filled':'';
+    pips.push(`<button class="pip ${filled}" onclick="setMyRating('${id}',${i})" title="${i}/10">${i}</button>`);
+  }
+  return`<div class="my-rating-row"><span class="my-rating-label">My rating</span><div class="rating-pips">${pips.join('')}</div></div>`;
+}
+
+function render(){
+  const grid=document.getElementById('restaurant-grid');
+  const filtered=getSorted(getFiltered());
+  updateCounts();
+  Array.from(grid.querySelectorAll('.card')).forEach(c=>c.remove());
+  const empty=document.getElementById('empty-state');
+  if(filtered.length===0){empty.style.display='block';return;}
+  empty.style.display='none';
+
+  filtered.forEach(r=>{
+    const status=r.status||'want';
+    const been=status==='been';
+    const card=document.createElement('div');
+    card.className='card'+(been?' been-there':'');
+
+    const nameEl=r.website?`<a class="card-name" href="${esc(r.website)}" target="_blank" rel="noopener">${esc(r.name)}</a>`:`<span class="card-name no-link">${esc(r.name)}</span>`;
+
+    const tags=[
+      r.neighborhood?`<span class="tag tag-neighborhood">${esc(r.neighborhood)}</span>`:'',
+      r.cuisine?`<span class="tag tag-cuisine">${esc(r.cuisine)}</span>`:'',
+      r.vibe?`<span class="tag ${vibeClass(r.vibe)}">${esc(r.vibe)}</span>`:'',
+    ].filter(Boolean).join('');
+
+    const wantActive=!been?'active-want':'';
+    const beenActive=been?'active-been':'';
+
+    card.innerHTML=`
+      <div class="card-top">
+        <div class="card-name-row">
+          <div class="priority-dot priority-${(r.priority||'medium').toLowerCase()}" style="margin-top:7px;"></div>
+          ${nameEl}
+        </div>
+        <div class="card-actions">
+          <button class="icon-btn edit" title="Edit" onclick="openModal('${r.id}')">&#9998;</button>
+          <button class="icon-btn" title="Remove" onclick="deleteRestaurant('${r.id}')">&#x2715;</button>
+        </div>
+      </div>
+      <div class="card-meta">
+        ${tags?`<div class="tag-row">${tags}</div>`:'<div></div>'}
+        ${renderGoogleRating(r.google_rating)}
+      </div>
+      ${r.notes?`<div class="card-notes">${esc(r.notes)}</div>`:''}
+      <div class="status-row">
+        <div class="status-toggle">
+          <button class="status-btn want ${wantActive}" onclick="toggleStatus('${r.id}')">Want to Try</button>
+          <button class="status-btn been ${beenActive}" onclick="toggleStatus('${r.id}')">Been There</button>
+        </div>
+        ${been?renderMyRating(r.id,r.my_rating):''}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+['search','filter-status','filter-neighborhood','filter-cuisine','filter-vibe','filter-priority'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',render);
+  document.getElementById(id).addEventListener('change',render);
+});
+document.querySelectorAll('.sort-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');currentSort=btn.dataset.sort;render();
+  });
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeModal();
+  if(e.key==='Enter'&&document.getElementById('modal-backdrop').classList.contains('open')&&document.activeElement.tagName!=='TEXTAREA')saveRestaurant();
+});
+load();render();
+</script>
+</body>
+</html>
