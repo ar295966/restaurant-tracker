@@ -112,6 +112,9 @@
   .btn-save{background:var(--ink);color:var(--cream);border:none;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:500;padding:9px 20px;border-radius:4px;cursor:pointer;transition:background 0.15s;}
   .btn-save:hover{background:var(--rust);}
   @media(max-width:640px){header{padding:20px;}main{padding:20px;}.toolbar{padding:12px 20px;}.form-cols{grid-template-columns:1fr;}input[type="text"]{min-width:120px;}.header-stats{gap:16px;}}
+  button{cursor:pointer;-webkit-tap-highlight-color:rgba(0,0,0,0.1);touch-action:manipulation;}
+  .btn-add,.btn-export,.btn-cancel,.btn-save,.sort-btn,.status-btn,.pip,.icon-btn{touch-action:manipulation;-webkit-tap-highlight-color:rgba(0,0,0,0.1);}
+  label.btn-export{touch-action:manipulation;}
 </style>
 </head>
 <body>
@@ -161,7 +164,7 @@
   <div style="display:flex;gap:8px;flex-shrink:0;">
     <button class="btn-export" onclick="exportData()" title="Download your list as a backup file">&#8595; Export</button>
     <label class="btn-export" title="Restore from a backup file" style="cursor:pointer;">&#8593; Import<input type="file" id="import-input" accept=".json" style="display:none;" onchange="importData(event)"></label>
-    <button class="btn-add" onclick="openModal()">+ Add Restaurant</button>
+    <button class="btn-add" id="btn-add-main">+ Add Restaurant</button>
   </div>
 </div>
 <main>
@@ -500,6 +503,23 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape')closeModal();
   if(e.key==='Enter'&&document.getElementById('modal-backdrop').classList.contains('open')&&document.activeElement.tagName!=='TEXTAREA')saveRestaurant();
 });
+// iOS-safe event binding for Add button
+(function(){
+  var addBtn=document.getElementById('btn-add-main');
+  if(addBtn){
+    addBtn.addEventListener('click',function(e){e.preventDefault();openModal();});
+    addBtn.addEventListener('touchend',function(e){e.preventDefault();openModal();});
+  }
+  // iOS-safe modal backdrop close
+  var backdrop=document.getElementById('modal-backdrop');
+  if(backdrop){
+    backdrop.addEventListener('click',handleBackdropClick);
+    backdrop.addEventListener('touchend',function(e){
+      if(e.target===backdrop){e.preventDefault();closeModal();}
+    });
+  }
+})();
+
 load();render();
 </script>
 </body>
